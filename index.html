@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <title>HighWay | Your Video Collection</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="preload" href="css/fonts/Kanit.woff2" as="font"/>
+      <link rel="preload" href="css/style.css" as="style" onload="this.rel='stylesheet'"/>
+      <link rel="preload" href="css/video-js.min.css" as="style" onload="this.rel='stylesheet'"/>
+      <link rel="preload" href="css/video-js-theme-fantasy.css" as="style" onload="this.rel='stylesheet'"/>
+      <link rel="preload" href="css/videojs-mobile-ui.css" as="style" onload="this.rel='stylesheet'"/>
+      <link rel="preload" href="css/videojs-seek-buttons.css" as="style" onload="this.rel='stylesheet'"/>
+   </head>
+   <body style="background-color: black;">
+      <nav id="set_index" style="z-index:-999;display:none;"; class="preload">
+         <div class="logo"> <a href="testing">High<em>Way</em></a></div>
+         <img class="search-icon" id="search-icon" width="24" height="24" src="img/search.png" alt="Search"> <input autocomplete="off" class="menu-icon" type="text" name="search" id="myInput" placeholder="Search..." onkeyup="loadAll()" style="outline:none;cursor:text;"> 
+      </nav>
+      <div id="video-container">
+         <div class="video-overlay"></div>
+         <div class="video-content">
+            <div class="inner">
+               <h1 style="margin-top: 20px;margin-bottom: 10px;" class="preload">Welcome to <em class="preload">Highway</em></h1>
+               <p style="margin: 0 0 10px;" class="preload">Your Video Collection</p>
+               <div class="scroll-icon preload"> <a class="scrollTo" data-scrollto="portfolio" href="#" onclick="play_vid()" style="outline:none;"><img width="64" height="64" src="img/scroll-icon.png" alt="<em>Scroll Down</em>"></a></div>
+            </div>
+         </div>
+         <video autoplay="" loop="" muted="" id="bg_video" style="display: inline-block;vertical-align: baseline;">
+            <source src="files/loop.mp4" type="video/mp4">
+         </video>
+      </div>
+      <div class="full-screen-portfolio" id="portfolio" style="text-align:center;">
+         <div class="container-fluid" id="video_table" style="text-align: center;"></div>
+         <div id="loader" style="visibility: visible;">
+            <div id="loadr"></div>
+         </div>
+         <div id="no-results" style="display: none;height: 92vh"> <img id="no-results-img" src="img/no-results-found.png" alt="Sorry! No Results Found"></div>
+         <p1 id="end-text" class="nodisp"><i>That's all folks!</i></p1>
+      </div>
+      <script src="js/vendor/jquery.min.js"></script><script src="js/lang/en.js"></script><script src="js/functions.js"></script><script src="js/vendor/video.min.js" defer></script> <script src="js/videojs-mobile-ui.min.js" defer></script><script src="js/videojs.hotkeys.min.js" defer></script><script src="js/videojs-seek-buttons.min.js" defer></script> 
+   </body>
+</html>
