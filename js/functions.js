@@ -10,6 +10,7 @@ function addFunctionalities(e) {
 	$("#" + ids[e].toString()).on("webkitfullscreenchange mozfullscreenchange fullscreenchange", function (e) {
 		"FullscreenOff" == (document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen ? "FullscreenOn" : "FullscreenOff") && this.player.pause()
 	});
+	$("#"+ids[e].toString()).get(0).player.on("contextmenu", function(e){e.preventDefault()});
 	var t = document.getElementById(ids[e]);
 	videojs(t).ready(function () {
 		var t = document.getElementById(ids[e] + "p");
@@ -116,12 +117,13 @@ function loadAll() {
 				var s;
 				void 0 !== (s = document.getElementById(ids[found_list[o]] + "p")) && null != s ? document.getElementById(ids[found_list[o]] + "p").style.display = "" : void 0 !== s && null != s || (createsingle(found_list[o]), document.getElementById(ids[found_list[o]] + "p").style.display = "")
 			}
+			if(o<9){document.querySelector("#loader").style.display = "none";document.getElementById("end-text").className = "";}
 			curpos_s = o
 		}
 	}
 	cur_ofset = $(".container-fluid").offset().top, (cur_ofset < 79 || cur_ofset > 81) && $("body").animate({
 		scrollTop: window.innerHeight - 80
-	}, 50)
+	}, 500)
 }
 document.addEventListener("DOMContentLoaded", function () {
 	window.HELP_IMPROVE_VIDEOJS = !1, jQuery(document).ready(function (e) {
@@ -143,10 +145,29 @@ document.addEventListener("DOMContentLoaded", function () {
 		}, 10)
 	});
 	var e = document.getElementById("set_index");
-	e.style.zIndex = "300", e.style.display = ""
-}), $("body").scroll(function () {
+	var ico=document.getElementById("scicon");
+	e.style.zIndex = "300", e.style.display = "",ico.style.display=""
+}), $("body").on("scroll",function () {
 	var e = $(this).scrollTop();
-	e > lastScrollTop ? ($(window).scrollTop() >= $(".container-fluid").offset().top + $(".container-fluid").outerHeight() - window.innerHeight && !search_mode ? myFunction() : $(window).scrollTop() >= $(".container-fluid").offset().top + $(".container-fluid").outerHeight() - window.innerHeight - 15 && search_mode && myFunction_search(), $(".container-fluid").offset().top < 0 && $("nav").addClass("hidden")) : $("nav").removeClass("hidden"), lastScrollTop = e
+	if(e > lastScrollTop){
+		if($(window).scrollTop() >= $(".container-fluid").offset().top + $(".container-fluid").outerHeight() - window.innerHeight && !search_mode)
+		{
+			myFunction();
+		}
+		else if($(window).scrollTop() >= $(".container-fluid").offset().top + $(".container-fluid").outerHeight() - window.innerHeight - 15 && search_mode){ 
+			myFunction_search();
+		}
+		if($(".container-fluid").offset().top < 0)
+		{
+			 	hideEvents();
+		}
+	}
+		else
+			 		{
+			 			unhideEvents();
+			 		} 
+		
+			 			lastScrollTop = e;
 }), $(window).on("orientationchange", function () {
 	if (window.screen.orientation.type = "landscape-primary") {
 		const t = document.querySelectorAll(".video-js");
@@ -158,3 +179,17 @@ document.addEventListener("DOMContentLoaded", function () {
 			}
 	}
 });
+function hideEvents(){
+	if(!$("nav").hasClass("hidden"))
+		$("nav").addClass("hidden");
+	if(!$("video").get(0).paused){
+		$("video").get(0).pause();
+	}
+}
+function unhideEvents(){
+	if($("nav").hasClass("hidden"))
+		$("nav").removeClass("hidden");
+	if($("video").get(0).paused){
+		$("video").get(0).play();
+	}
+}

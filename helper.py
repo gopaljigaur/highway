@@ -5,7 +5,7 @@ import filetype as flt
 import os, os.path
 import numpy as np
 import subprocess
-import sys, getopt
+import sys, getopt, shutil
 from PIL import Image, ImageFont, ImageDraw
 import re
 from pydub.utils import mediainfo
@@ -149,19 +149,37 @@ def main(argv):
     if not noemail:
         subprocess.call(['sendemail', '-f', 'rpinotify5@gmail.com', '-t', 'gopaljigaur@gmail.com', '-u', 'Helper Script Started', '-m', 'Helper Script Started at : '+dt_string, '-s', 'smtp.gmail.com:587', '-xu', 'rpinotify5@gmail.com', '-xp', 'Ljgad#94912'])
     
-    #cwd=Path('C:/inetpub/wwwroot')
-    cwd=Path('D:/Github/highway')
+    cwd=Path('C:/inetpub/wwwroot')
+    #cwd=Path('D:/Github/highway')
     vidpath = Path.joinpath(cwd,'videos')
     thumbpath = Path.joinpath(cwd,'thumbs')
+    tagPath = Path.joinpath(cwd,'files')
+    runpath = Path('C:/inetpub/generate')
     
     itr = Path.iterdir(vidpath)
     itr1 = Path.iterdir(vidpath)
     itr2 = Path.iterdir(thumbpath)
-
+    lis_prev = list()
     lis = list()
     thumblis=list()
     images_present = list()
     to_be_deleted = list()
+
+    if(os.path.isfile(Path.joinpath(runpath,'vidlist.txt'))):
+        f = open(Path.joinpath(runpath,'vidlist.txt'))
+        cont = f.readlines()
+        #remove \n
+        for i in cont:
+            lis_prev.append(i[:-1])
+        f.close()
+    elif(os.path.isfile(Path.joinpath(runpath,'vidlist.txt.bkp'))):
+        cont = f.readlines()
+        #remove \n
+        for i in cont:
+            lis_prev.append(i[:-1])
+        f.close()
+    else:
+        print("neither files found...winging it")
     #Switch
 
     for i in itr:
@@ -179,19 +197,27 @@ def main(argv):
                 lis.append(str(i))
     
     for i in itr2:
+        if str(i)[-3:]in ('fig','php'):
+            continue
         to_be_deleted.append(str(i))
-        
-    f_try = open(Path.joinpath(cwd,'tags.txt'),'r')
+    #tag test
+
+    f_try = open(Path.joinpath(tagPath,'tags.txt'),'r')
     cont = f_try.readlines()
+    if(len(cont)!=0):
+        if(os.path.isfile(Path.joinpath(runpath,'tags.txt.bkp'))):
+            os.remove(Path.joinpath(runpath,'tags.txt.bkp'))
+        if(os.path.isfile(Path.joinpath(tagPath,'tags.txt'))):
+            shutil.copyfile(Path.joinpath(tagPath,'tags.txt'),Path.joinpath(runpath,'tags.txt.bkp'))
     if(len(cont)!=len(lis)):
         tag_edit=True
         
     if(tag_edit):
-        fl = open(Path.joinpath(cwd,'tags.txt'),'r')
+        fl = open(Path.joinpath(tagPath,'tags.txt'),'r')
         cont = fl.readlines()
         fl.close()
         if(len(cont)==0):
-            fl = open(Path.joinpath(cwd,'tags.txt'),'w+')
+            fl = open(Path.joinpath(tagPath,'tags.txt'),'w+')
             print('Need to generate all tags..')
             print('Input tags for each video line by line...')
             for i in range(1,len(lis)+1):
@@ -203,49 +229,44 @@ def main(argv):
                 fl.write('\n')
             print('written')
             fl.close()
-            #print('Run again without params to write changes to html')
-        elif(len(cont)<len(lis)):
-            fl =open(Path.joinpath(cwd,'tags.txt'),'r+')
+            
+        elif(len(cont)!=len(lis)):
+            fl =open(Path.joinpath(tagPath,'tags.txt'),'r+')
             content = fl.readlines()
             fl.close()
-            print('Tags for some videos missing. Insert Mode')
-            fl =open(Path.joinpath(cwd,'tags.txt'),'w+')
-            for i in range(1,len(lis)+1):
-                print(i,end=' - ')
-                print(lis[i-1][lis[i-1].rindex('\\')+1:-4],end=' -> ')
-                if((i-1)<len(content)):
-                    print(content[i-1])
-                else:
+            print('Number of tags mismatch. Correction Mode')
+            for i in range(0,len(lis)):
+                print((i+1),end=' - ')
+                print(lis[i][lis[i].rindex('\\')+1:-4],end=' -> ')
+
+                if(lis[i] not in lis_prev):
                     print('**no tags**')
-            
-            while(True):
-                print('Enter the video number (q to stop)')
-
-                vid_num = input()
-                if(vid_num=='q'):
-                    for k in content_upper:
-                        fl.write(k)
-                        
-                    fl.close()
-                    print('written.')
-                    break
+                    continue
                 else:
-                    vid_num = int(vid_num)
+                    print(lis_prev.index(lis[i]))
+                    print(content[lis_prev.index(lis[i])])
+            fl =open(Path.joinpath(tagPath,'tags.txt'),'w+')
+            for i in range(0,len(lis)):
+                if(lis[i] in lis_prev):
+                    #get tags from that index
+                    t=lis[i]
+                    u=lis_prev.index(t)
+                    v=content[u]
+                    fl.write(v)
+                else:
+                    print(lis[i])
+                    print('Input Tags : ',end='')
+                    inserted_tags = input()
+                    fl.write(inserted_tags)
+                    fl.write('\n')
 
-                print('Enter the Tags : ',end='')
-                inserted_tags = input()
-                content_upper = content[:vid_num-1]
-                content_upper.append(inserted_tags+'\n')
-                for j in content[vid_num:]:
-                    content_upper.append(j)
-
-                content =content_upper[:]
+            fl.close()
         elif(len(cont)==len(lis)):
-            fl = open(Path.joinpath(cwd,'tags.txt'),'r+')
+            fl = open(Path.joinpath(tagPath,'tags.txt'),'r+')
             content = fl.readlines()
             fl.close()
             print('All Tags in Place. Edit Mode')
-            fl = open(Path.joinpath(cwd,'tags.txt'),'w+')
+            fl = open(Path.joinpath(tagPath,'tags.txt'),'w+')
             for i in range(1,len(lis)+1):
                 print(i,end=' - ')
                 print(lis[i-1][lis[i-1].rindex('\\')+1:-4])
@@ -277,13 +298,8 @@ def main(argv):
                 content =content_upper[:]
 
         else:
-            print("More tags than necessary. Maybe check for extra newlines")
-        f_try_again = open(Path.joinpath(cwd,'tags.txt'),'r')
-        cont_again = f_try_again.readlines()
-        if(len(cont_again)!=len(lis)):
-            print('Number of tags and videos doesn\'t match please run the script again to check.')
-            sys.exit()
-
+            print("Tag generation error")
+        
     #video compression
     vid_cmp_num=0
     last_mail_time = 0
@@ -316,7 +332,7 @@ def main(argv):
             if(bitr>700000) or (fp>35):
                 print('will be compressed')
                 outfile = str(i)[:-4]+'_temp.mp4'
-                subprocess.call(['ffmpeg','-y','-r','25', '-i', str(i), '-c:v', 'libx264','-c:a','aac','-b:v','600k','-b:a','64k', outfile])
+                subprocess.call(['ffmpeg','-y','-i', str(i), '-c:v', 'libx264','-c:a','aac','-b:v','600k','-filter:v','fps=fps=25','-b:a','64k', outfile])
                 os.remove(str(i))
                 #remove original
                 os.rename(outfile,i)
@@ -337,7 +353,7 @@ def main(argv):
             if not noemail:
                 subprocess.call(['sendemail', '-f', 'rpinotify5@gmail.com', '-t', 'gopaljigaur@gmail.com', '-u', 'Compression Finished', '-m', 'Compression of '+str(vid_cmp_num)+' videos finished at : '+dt_string, '-s', 'smtp.gmail.com:587', '-xu', 'rpinotify5@gmail.com', '-xp', 'Ljgad#94912'])
         
-    tag_file = open(Path.joinpath(cwd,'tags.txt'),'r+')
+    tag_file = open(Path.joinpath(tagPath,'tags.txt'),'r+')
     tag_line = tag_file.readlines()
     tag_file.close()
     tag_lis=list()
@@ -352,9 +368,7 @@ def main(argv):
     random.shuffle(shuff_lis)
     for i in range(1,len(shuff_lis)+1):
         id_list+='"'+str(i)+'",'
-        #vid_list+='"'+str(base64.b64encode(('videos/'+shuff_lis[i-1][shuff_lis[i-1].rindex('\\')+1:]).encode('utf-8')))[2:-1]+'",\n\t\t\t\t'
         vid_list+='"'+str(base64.b64encode(('videos/'+shuff_lis[i-1][shuff_lis[i-1].rindex('\\')+1:]).encode('utf-8')))[2:-1]+'",'
-        #tag_list+='"'+str(base64.b64encode(tag_lis[lis.index(shuff_lis[i-1])].encode('utf-8')))[2:-1]+'",\n\t\t\t\t'
         tag_list+='"'+str(base64.b64encode(tag_lis[lis.index(shuff_lis[i-1])].encode('utf-8')))[2:-1]+'",'
         if(flt.guess(shuff_lis[i-1]).mime=='video/quicktime'):
             mime_list+='"'+str(base64.b64encode(('video/mp4').encode('utf-8')))[2:-1]+'",'
@@ -370,7 +384,7 @@ def main(argv):
         # now loop generation
         fourcc = cv.VideoWriter_fourcc(*'XVID')
 
-        out = cv.VideoWriter(str(Path.joinpath(cwd,'input.avi')),fourcc, 30.0, (1920,1080))
+        out = cv.VideoWriter(str(Path.joinpath(tagPath,'input.avi')),fourcc, 30.0, (1920,1080))
 
         temp_lis=list()
         for i in lis:
@@ -393,14 +407,8 @@ def main(argv):
                 if ret==True:
                     #removal of borders
                     frame = crop_img(frame,5)
-                
                     frame = cv.resize(frame,(1920,1080))
-            
                     out.write(frame)
-
-                    #cv.imshow('frame',frame)
-                    #if cv.waitKey(1)== ord('q'):
-                    #    break
                 else:
                     break
         
@@ -410,10 +418,10 @@ def main(argv):
         out.release()
         cv.destroyAllWindows()
 
-        if(os.path.isfile(str(Path.joinpath(cwd,'loop.mp4')))):
-            os.remove(str(Path.joinpath(cwd,'loop.mp4')))
-        subprocess.call(['ffmpeg','-y', '-i', str(Path.joinpath(cwd,'input.avi')), '-c:v', 'libx264','-b:v','800k','-r', '25', str(Path.joinpath(cwd,'loop.mp4'))])
-        os.remove(str(Path.joinpath(cwd,'input.avi')))
+        if(os.path.isfile(str(Path.joinpath(tagPath,'loop.mp4')))):
+            os.remove(str(Path.joinpath(tagPath,'loop.mp4')))
+        subprocess.call(['ffmpeg','-y', '-i', str(Path.joinpath(tagPath,'input.avi')), '-c:v', 'libx264','-b:v','800k','-filter:v','fps=fps=25', str(Path.joinpath(tagPath,'loop.mp4'))])
+        os.remove(str(Path.joinpath(tagPath,'input.avi')))
     
 
     # generating thumbnails and index now
@@ -471,30 +479,14 @@ def main(argv):
     if(thum_gen.count(True)>0):
         print('Thumbnail generation required')
     else:
-        print('Generating only List')
+        print('Generating only JS')
 
-    file = open(str(Path.joinpath(cwd,'js/det/list.js')),'w+')
-
-    #file_id_up = content[:content.index('var ids=')+8]
-    #file_id_down = content[content.index('var vid_list='):]
-    #content = file_id_up+id_list+';\n\t'+file_id_down
+    file = open(str(Path.joinpath(cwd,'js/lang/en.js')),'w+')
     content = id_list+';'+vid_list+';'+mime_list+';'+tag_list+';'
-    #file_vid_up = content[:content.index('var vid_list=')+13]
-    #file_vid_down = content[content.index('var mime_list='):]
-    #content = file_vid_up+vid_list+';\n\t'+file_vid_down
-    #content = file_vid_up+vid_list+';'+file_vid_down
-    #file_mime_up = content[:content.index('var mime_list=')+14]
-    #file_mime_down = content[content.index('var tag_list='):]
-    #content = file_mime_up+mime_list+';\n\t'+file_mime_down
-    #content = file_mime_up+mime_list+';'+file_mime_down
-    #file_tag_up = content[:content.index('var tag_list=')+13]
-    #file_tag_down = content[content.index('document.addEventListener("DOMContentLoaded",function()'):]
-    #content = file_tag_up + tag_list +';\n'+file_tag_down
-    #content = file_tag_up + tag_list +';'+file_tag_down
     file.write(content)
     file.close()
 
-    fontpath = os.path.join(cwd,"Roboto-Medium.ttf")
+    fontpath = os.path.join("D:/Github/highway/Roboto-Medium.ttf")
     
     font = ImageFont.truetype(fontpath, 20)
 
@@ -654,8 +646,29 @@ def main(argv):
                     
                 
         
-    print('Saved list.js')
+    print('Saved lang.js')
+    f_try = open(Path.joinpath(tagPath,'tags.txt'),'r')
+    cont = f_try.readlines()
+
+    if(len(cont)==len(lis)):
+        if(os.path.isfile(Path.joinpath(runpath,'vidlist.txt.bkp'))):
+            os.remove(Path.joinpath(runpath,'vidlist.txt.bkp'))
+        if(os.path.isfile(Path.joinpath(runpath,'vidlist.txt'))):
+            shutil.copyfile(Path.joinpath(runpath,'vidlist.txt'),Path.joinpath(runpath,'vidlist.txt.bkp'))
+        f = open(Path.joinpath(runpath,'vidlist.txt'),'w+')
+        for i in lis:
+            f.write(i+'\n')
+        f.close()
+    
+    if(os.path.isfile(Path.joinpath(runpath,'vidlist.txt.bkp'))):
+        os.remove(Path.joinpath(runpath,'vidlist.txt.bkp'))
+    f_try = open(Path.joinpath(tagPath,'tags.txt'),'r')
+    cont = f_try.readlines()
+    if(len(cont)!=0):
+        if(os.path.isfile(Path.joinpath(runpath,'tags.txt.bkp'))):
+            os.remove(Path.joinpath(runpath,'tags.txt.bkp'))
     lis=list()
+    #subprocess.call(['powershell','Copy-Item', '-Exclude', '*.mp4', 'C:/inetpub/wwwroot/*', '-Recurse', 'C:/inetpub/bkup', '-passThru', '-force'])
     datetime_in = datetime.now(tz_in)
     dt_string = datetime_in.ctime()
     if not noemail:
